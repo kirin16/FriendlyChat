@@ -30,6 +30,12 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton mPhotoPickerButton;
     private EditText mMessageEditText;
     private Button mSendButton;
+    private FirebaseDatabase mFirebaseDatabe;
+    private DatabaseReference mDatabaseReference;
+    private ChildEventListener mChildEventListener;
 
     private String mUsername;
 
@@ -55,6 +64,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mUsername = ANONYMOUS;
+
+        mFirebaseDatabe = FirebaseDatabase.getInstance();
+        mDatabaseReference = mFirebaseDatabe.getReference().child("chat").child("messages");
 
         // Initialize references to views
         mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
@@ -105,11 +117,40 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 // TODO: Send messages on click
-
+                FriendlyMessage friendlyMessage = new FriendlyMessage(mMessageEditText.getText().toString(), mUsername, null);
+                mDatabaseReference.push().setValue(friendlyMessage);
                 // Clear input box
                 mMessageEditText.setText("");
             }
         });
+        mChildEventListener = new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+               FriendlyMessage friendlyMessage = dataSnapshot.getValue(FriendlyMessage.class);
+               mMessageAdapter.add(friendlyMessage);
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        };
+        mDatabaseReference.addChildEventListener(mChildEventListener);
     }
 
     @Override
